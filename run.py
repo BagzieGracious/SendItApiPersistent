@@ -26,9 +26,8 @@ class Loader:
         # Directing to Routes
         self.route.fetch_routes(app)
 
-        # Create database Tables
-        Database().create_users_table()
-        Database().create_order_table()
+        # create tables
+        Database()
 
         return app
 
