@@ -2,6 +2,10 @@
 Module for configuring server environment variables
 """
 
+class Security:
+    def __init__(self):
+        self.key = "THIS IS A SECURITY KEY"
+
 class Config:
     """
     Default environment configuration
