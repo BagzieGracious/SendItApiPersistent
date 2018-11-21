@@ -13,12 +13,8 @@ class Users:
         Method for adding a user to data structures
         """
         pwd = generate_password_hash(data['password'], method='sha256')
-        sql = """
-                INSERT INTO users(username, firstname, lastname, contact, email, password, usertype
-                )VALUES(%s, %s, %s, %s, %s, %s, %s)
-                """
-        self.cursor.execute(sql, (data['username'], data['firstname'],
-                                  data['lastname'], data['contact'], data['email'], pwd, data['usertype']))
+        sql = """INSERT INTO users(username, firstname, lastname, contact, email, password, usertype)VALUES(%s, %s, %s, %s, %s, %s, %s)"""
+        self.cursor.execute(sql, (data['username'], data['firstname'],data['lastname'], data['contact'], data['email'], pwd, data['usertype']))
 
     def check_credentials(self, username, password):
         """
@@ -29,7 +25,7 @@ class Users:
         data = self.cursor.fetchone()
         if data is None:
             return False
-        if check_password_hash(data[6], password):
+        if check_password_hash(data['password'], password):
             return data
         return False
 
