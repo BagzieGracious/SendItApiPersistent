@@ -55,10 +55,10 @@ class Orders:
         self.cursor.execute(sql, [data['user_id'], data['product'], data['destination']])
 
         if not self.cursor.fetchone():
-            sql1 = "INSERT INTO orders( product, description, weight, order_status, pickup, destination, user_id)" \
-                   " VALUES(%s, %s, %s, %s, %s, %s, %s)"
+            sql1 = "INSERT INTO orders( product, description, weight, order_status, pickup, destination, present, user_id)" \
+                   " VALUES(%s, %s, %s, %s, %s, %s, %s, %s)"
             self.cursor.execute(sql1, [data['product'], data['description'], data['weight'], data['order_status'],
-                                       data['pickup'], data['destination'], data['user_id']])
+                                       data['pickup'], data['destination'], data['present'], data['user_id']])
             self.connect.commit()
 
             sql = "SELECT * FROM orders WHERE user_id = %s AND product = %s AND destination = %s"
