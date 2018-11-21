@@ -1,14 +1,17 @@
 language: python
 python:
   - "3.6.5"
-install:
-  - pip install -r requirements.txt
-#Specify what command to run test
+
 services:
   - postgres
-env:
-  global:
-    - APP_SETTINGS='test_db'
+
+
+install:
+  - pip install -r requirements.txt
+
+before_script:
+  - psql -c 'create database postgres;' -U postgres
+
 script:
   - pytest --cov
   - coverage
