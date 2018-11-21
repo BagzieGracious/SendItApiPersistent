@@ -5,10 +5,7 @@ class Database:
     def __init__(self):
         try:
             self.connect = psycopg2.connect(
-                dbname='SendItBagzie',
-                user='postgres',
-                host='127.0.0.1',
-                password='password'
+                dbname='SendItBagzie'
             )
             self.cursor = self.connect.cursor()
             self.connect.autocommit = True
