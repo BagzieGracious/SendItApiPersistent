@@ -46,7 +46,7 @@ class Controller:
         """
         Method for signup that deals with params from views
         """
-        value = DataValidation(self.req, 'user').validate()
+        value = DataValidation(self.req).validator(['username', 'firstname', 'lastname', 'contact', 'email', 'password'], 'signup')
         if isinstance(value, bool):
             data = self.req.get_json()
             if not self.user.check_user_details(data['username'], data['email']):
@@ -70,10 +70,10 @@ class Controller:
         Method for creating a parcel delivery order
         """
         if (self.token_value())['usertype'] == 'user':
-            value = DataValidation(self.req, 'order').validate()
+            value = DataValidation(self.req).validator(['product', 'description', 'weight', 'pickup', 'destination'], 'order')
             if isinstance(value, bool):
                 data = self.req.get_json()
-                order = dict(order_id=None, product=data['product'], description=data['description'], weight=data['weight'], order_status='pending', pickup=data['pickup'], destination=data['destination'], user_id=(self.token_value())['user_id'], usertype=None)
+                order = dict(order_id=None, product=data['product'], present=['pickup'], description=data['description'], weight=data['weight'], order_status='pending', pickup=data['pickup'], destination=data['destination'], user_id=(self.token_value())['user_id'], usertype=None)
                 resp = self.order.create_order(order)
                 if resp:
                     return jsonify({"status": "success", "data": resp}), 201
@@ -90,10 +90,7 @@ class Controller:
             if order_id is None:
                 data = self.order.get_order()
                 if data:
-                    order_list = []
-                    for ord in data:
-                        order_list.append(ord)
-                    return jsonify({"status": "success", "data": order_list}), 200
+                    return jsonify({"status": "success", "data": data}), 200
                 return jsonify({"status": "failure", "error": {"message": "no order found"}}), 404
 
             data = self.order.get_order(order_id)
@@ -106,10 +103,7 @@ class Controller:
             if order_id is None:
                 data = self.order.get_order(None, (self.token_value())['user_id'])
                 if data:
-                    order_list = []
-                    for ord in data:
-                        order_list.append(ord)
-                    return jsonify({"status": "success", "data": order_list}), 200
+                    return jsonify({"status": "success", "data": data}), 200
                 return jsonify({"status": "failure", "error": {"message": "no order found"}}), 404
 
             data = self.order.get_order(order_id, (self.token_value())['user_id'])
