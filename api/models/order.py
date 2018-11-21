@@ -35,8 +35,12 @@ class Orders:
         self.cursor.execute(sql)
         return self.cursor.fetchone()
 
-    def update_order_details(self, order_id, status, type):
-        sql = "UPDATE orders SET {} = '{}' WHERE order_id = '{}'".format(type, status, order_id)
+    def update_order_details(self, order_id, status, type, user_id):
+        if user_id is None:
+            sql = "UPDATE orders SET {} = '{}' WHERE order_id = '{}'".format(type, status, order_id)
+        else:
+            sql = "UPDATE orders SET {} = '{}' WHERE order_id = '{}' AND user_id = '{}'".format(type, status, order_id, user_id)
+
         self.cursor.execute(sql)
         self.connect.commit()
         sql1 = "SELECT * FROM orders WHERE order_id = %s"
