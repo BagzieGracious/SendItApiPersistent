@@ -5,12 +5,7 @@ from psycopg2.extras import RealDictCursor
 class Database:
     def __init__(self):
         try:
-            self.connect = psycopg2.connect(
-                dbname='postgres',
-                user='postgres',
-                host='127.0.0.1',
-                password='password'
-            )
+            self.connect = psycopg2.connect("postgres://yixsdugjgntcuc:d97516062b99215cad88f7fc5eab48fe4bd69a92b846dffdd7d4b98a2b7e0504@ec2-23-23-101-25.compute-1.amazonaws.com:5432/dd1hp0b5fj1ehp")
             self.cursor = self.connect.cursor(cursor_factory=RealDictCursor)
             self.connect.autocommit = True
 
