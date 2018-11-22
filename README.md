@@ -4,7 +4,7 @@
 # SendItApi
 SendIT is a courier service that helps users deliver parcels to different destinations. SendIT provides courier quotes based on weight categories. This application is a python ([Python 3.6.5](https://docs.python.org/3/)) web api that works or uses flask framework ([Flask](http://flask.pocoo.org/)) technlogy.
 
-**Application Features**
+# Application Features
 * Users can create an account and log in.
 * Users can create a parcel delivery order.
 * Users can change the destination of a parcel delivery order.
