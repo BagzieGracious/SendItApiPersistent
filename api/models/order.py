@@ -1,12 +1,12 @@
 """
-Module that acts a model, for handling data manipulation
+Module for handling order business logic
 """
 from api.config.database import Database
 
 
 class Orders:
     """
-    model class that add data to data structures
+    Order class that handles business logic for orders
     """
     def __init__(self):
         self.connect = Database().connect
@@ -14,7 +14,7 @@ class Orders:
 
     def get_order(self, order_id=None, user_id=None):
         """
-        method for get data from data structures
+        method that retrieves orders from the order table
         """
         if user_id is None:
             if order_id is None:
@@ -36,6 +36,9 @@ class Orders:
         return self.cursor.fetchone()
 
     def update_order_details(self, order_id, status, type, user_id):
+        """
+        Method that updates order details in the order table
+        """
         if user_id is None:
             sql = "UPDATE orders SET {} = '{}' WHERE order_id = '{}'".format(type, status, order_id)
         else:
@@ -49,7 +52,7 @@ class Orders:
 
     def create_order(self, data):
         """
-        method for add an order in the data structure
+        method that adds an order in the order table
         """
         sql = "SELECT * FROM orders WHERE user_id = %s AND product = %s AND destination = %s"
         self.cursor.execute(sql, [data['user_id'], data['product'], data['destination']])
@@ -58,7 +61,7 @@ class Orders:
             sql1 = "INSERT INTO orders( product, description, weight, order_status, pickup, destination, present, user_id)" \
                    " VALUES(%s, %s, %s, %s, %s, %s, %s, %s)"
             self.cursor.execute(sql1, [data['product'], data['description'], data['weight'], data['order_status'],
-                                       data['pickup'], data['destination'], data['present'], data['user_id']])
+                                       data['pickup'], data['destination'], data['pickup'], data['user_id']])
             self.connect.commit()
 
             sql = "SELECT * FROM orders WHERE user_id = %s AND product = %s AND destination = %s"
