@@ -12,12 +12,12 @@ from api.config.data_validation import DataValidation
 
 class Controller:
     """
-    Controller class that inherits MethodView object
+    Controller class that dispatches request to different methods
     """
 
     def __init__(self):
         """
-        Class contructor for initialising model object
+        Class contructor for initialising constructor object
         """
         self.req = request
         self.security_key = Security().key
@@ -25,6 +25,7 @@ class Controller:
         self.order = Orders()
 
     def token_value(self):
+        """Method that returns the current token"""
         return (jwt.decode(request.headers['token'], self.security_key))['user']
 
     def login(self):
@@ -52,7 +53,7 @@ class Controller:
             if not self.user.check_user_details(data['username'], data['email']):
                 self.user.add_user(dict(username=data['username'], firstname=data['firstname'], lastname=data['lastname'], contact=data['contact'], email=data['email'], password=data['password'], usertype='user'))
                 return jsonify({"status": "success", "message": "you have signed up successfully"}), 200
-            return jsonify({"status": "failure", "error": {"message": "username or email already exists"}}), 403
+            return jsonify({"status": "failure", "error": {"message": "username or email already exists"}}), 406
         return value
 
     def get_users(self):
@@ -84,7 +85,7 @@ class Controller:
 
     def get_order(self, order_id=None):
         """
-        Method for getting orders from datastructures
+        Method for getting orders 
         """
         if (self.token_value())['usertype'] == 'admin':
             if order_id is None:
@@ -123,14 +124,21 @@ class Controller:
         return jsonify({"status": "failure", "error": {"message": "you can't access this resource"}}), 401
 
     def change_product(self, order_id, usertype, details, type):
-        if (self.token_value())['usertype'] == usertype:
-            data = self.order.get_order(order_id)
-            if data:
-                if data['order_status'] == 'cancelled' or data['order_status'] == 'delivered':
-                    return jsonify({"status": "failure","error": {"message": "you cannot change details of a delivered or cancelled order"}}), 404
-                user_id = [None if usertype == 'admin' else (self.token_value())['user_id']]
-                req = ['cancelled' if type == 'cancel' else (request.json)['data']]
-                ord = self.order.update_order_details(order_id, req[0], details, user_id[0])
-                return jsonify({"status": "success", "data": ord}), 200
-            return jsonify({"status": "failure", "error": {"message": "no order found"}}), 404
-        return jsonify({"status": "failure", "error": {"message": "only "+ usertype +" change destination of an order"}}), 404    
+        """
+        Method for changing details of an order
+        """
+        if (self.token_value())['usertype'] == usertype: 
+            value = DataValidation.validate_product_change(self.req, type)
+            if isinstance(value, bool):
+                data = self.order.get_order(order_id)
+                if data:
+                    if data['order_status'] == 'cancelled' or data['order_status'] == 'delivered':
+                        return jsonify({"status": "failure","error": {"message": "you cannot change details of a delivered or cancelled order"}}), 404
+                    user_id = [None if usertype == 'admin' else (self.token_value())['user_id']]
+                    req = ['cancelled' if type == 'cancel' else (request.json)['data']]
+                    ord = self.order.update_order_details(order_id, req[0], details, user_id[0])
+                    return jsonify({"status": "success", "data": ord}), 200
+                return jsonify({"status": "failure", "error": {"message": "no order found"}}), 404
+            return value
+        return jsonify({"status": "failure", "error": {"message": "only "+ usertype +" change destination of an order"}}), 401
+
