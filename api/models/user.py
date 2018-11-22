@@ -1,8 +1,14 @@
+"""
+Module for handling user business logic
+"""
 from werkzeug.security import check_password_hash, generate_password_hash
 from api.config.database import Database
 
 
 class Users:
+    """
+    User class that handles business logic for users
+    """
 
     def __init__(self):
         self.connect = Database().connect
@@ -10,7 +16,7 @@ class Users:
 
     def add_user(self, data):
         """
-        Method for adding a user to data structures
+        Method for adding a user into a user table
         """
         pwd = generate_password_hash(data['password'], method='sha256')
         sql = """INSERT INTO users(username, firstname, lastname, contact, email, password, usertype)VALUES(%s, %s, %s, %s, %s, %s, %s)"""
@@ -18,7 +24,7 @@ class Users:
 
     def check_credentials(self, username, password):
         """
-        Method for checking users username or password
+        Method for checking users username and password
         """
         sql = "SELECT * FROM users WHERE username='{}'".format(username)
         self.cursor.execute(sql)
@@ -31,7 +37,7 @@ class Users:
 
     def get_all_users(self):
         """
-        Method for getting all users from data structures
+        Method for getting all users from the user table
         """
         sql = "SELECT * FROM users"
         self.cursor.execute(sql)
@@ -49,7 +55,7 @@ class Users:
 
     def get_user_id(self, username):
         """
-        Method that return user_id
+        Method that return user details
         """
         sql = "SELECT * FROM users WHERE username='{}'".format(username)
         self.cursor.execute(sql)
