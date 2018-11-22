@@ -1,10 +1,11 @@
 """
-Module for testing create order
+Module for testing
 """
 from unittest import TestCase
 from flask import json
 from run import APP
 from api.config.database import Database
+from api.tests.create_order import CreateOrder
 
 
 class TestView(TestCase):
@@ -20,7 +21,7 @@ class TestView(TestCase):
         self.app = APP
         self.client = self.app.test_client
         self.client().post(
-            '/api/v1/auth/signup',
+            '/api/v2/auth/signup',
             data=json.dumps(dict(
                 username='bagzie',
                 firstname='bagenda',
@@ -33,7 +34,7 @@ class TestView(TestCase):
         )
 
         login = self.client().post(
-            '/api/v1/auth/login',
+            '/api/v2/auth/login',
             data=json.dumps(dict(
                 username='bagzie',
                 password='bagenda'
@@ -48,30 +49,150 @@ class TestView(TestCase):
         """
         Method returns create order results
         """
-        post = self.client().post(
-            '/api/v1/parcels',
-            data=json.dumps(dict(
-                pickup='mulago',
-                destination='ntinda',
-                description='This is a smart phone',
-                weight=3,
-                product='iPhone',
-            )),
+        post = CreateOrder().create_order('mulago', 'kyebando', 'this is a smartphone', 5, 'iphone', self.token)
+
+        resp = json.loads(post.data)
+        self.assertEqual(resp['data']['order_status'], 'pending')
+        self.assertEqual(resp['data']['product'], 'iphone')
+        self.assertEqual(resp['status'], 'success')
+        self.assertEqual(post.status_code, 201)
+
+    def test_get_orders(self):
+        """
+        Method for testing get orders
+        """
+        CreateOrder().create_order('mulago', 'kyebando', 'this is a smartphone', 5, 'iphone', self.token)
+        CreateOrder().create_order('makindye', 'mutundwe', 'this is a smartphone', 5, 'itel', self.token)
+        CreateOrder().create_order('bukoto', 'kamwokya', 'this is a smartphone', 5, 'techno', self.token)
+
+        post = self.client().get(
+            '/api/v2/parcels/',
             content_type='application/json',
             headers={'token': self.token}
         )
 
         resp = json.loads(post.data)
-        self.assertEqual(resp['data']['order_status'], 'pending')
         self.assertEqual(resp['status'], 'success')
-        self.assertEqual(post.status_code, 201)
+        self.assertEqual(len(resp['data']), 3)
+        self.assertEqual(post.status_code, 200)
+
+    def test_single_order(self):
+        """
+        Method for checking single order
+        """
+        CreateOrder().create_order('mukono', 'namanve', 'this is a smartphone', 5, 'Black Berry', self.token)
+        post = self.client().get(
+            '/api/v2/parcels/1',
+            content_type='application/json',
+            headers={'token': self.token}
+        )
+
+        resp = json.loads(post.data)
+        self.assertEqual(resp['status'], 'success')
+        self.assertEqual(resp['data']['product'], 'Black Berry')
+        self.assertEqual(post.status_code, 200)
+
+    def test_user_order(self):
+        """
+        Method for checking user order
+        """
+        CreateOrder().create_order('arua', 'jinja', 'this is a smartphone', 4, 'Samsung', self.token)
+        post = self.client().get(
+            '/api/v2/users/4/parcels',
+            content_type='application/json',
+            headers={'token': self.token}
+        )
+
+        resp = json.loads(post.data)
+        self.assertEqual(resp['status'], 'failure')
+        self.assertEqual(resp['error']['message'], "you can't access this resource")
+        self.assertEqual(post.status_code, 401)
+
+
+    def test_cancel_order(self):
+        """
+        Method for checking cancel order
+        """
+        CreateOrder().create_order('moroto', 'malaba', 'this is a smartphone', 4, 'Nokia', self.token)
+
+        post = self.client().put(
+            '/api/v2/parcels/1/cancel',
+            content_type='application/json',
+            headers={'token': self.token}
+        )
+
+        resp = json.loads(post.data)
+        self.assertEqual(resp['status'], 'success')
+        self.assertEqual(resp['data']['pickup'], 'moroto')
+        self.assertEqual(resp['data']['product'], 'Nokia')
+        self.assertEqual(post.status_code, 200)
+
+
+    def test_change_destination(self):
+        """
+        Method for checking change destination
+        """
+        CreateOrder().create_order('yumbe', 'karamoja', 'this is a smartphone', 4, 'LG', self.token)
+
+        post = self.client().put(
+            '/api/v2/parcels/1/destination',
+            data=json.dumps({"data":"arusha"}),
+            content_type='application/json',
+            headers={'token': self.token}
+        )
+
+        resp = json.loads(post.data)
+        self.assertEqual(resp['status'], 'success')
+        self.assertEqual(resp['data']['pickup'], 'yumbe')
+        self.assertEqual(resp['data']['destination'], 'arusha')
+        self.assertEqual(resp['data']['product'], 'LG')
+        self.assertEqual(post.status_code, 200)
+
+
+    def test_change_status(self):
+        """
+        Method for checking change destination
+        """
+        CreateOrder().create_order('yumbe', 'karamoja', 'this is a smartphone', 4, 'LG', self.token)
+
+        post = self.client().put(
+            '/api/v2/parcels/1/status',
+            data=json.dumps({"data":"delivered"}),
+            content_type='application/json',
+            headers={'token': self.token}
+        )
+
+        resp = json.loads(post.data)
+        self.assertEqual(resp['status'], 'failure')
+        self.assertEqual(resp['error']['message'], 'only admin change destination of an order')
+        self.assertEqual(post.status_code, 401)
+
+
+    def test_change_present_location(self):
+        """
+        Method for checking change destination
+        """
+        CreateOrder().create_order('yumbe', 'karamoja', 'this is a smartphone', 4, 'LG', self.token)
+
+        post = self.client().put(
+            '/api/v2/parcels/1/presentLocation',
+            data=json.dumps({"data":"arusha"}),
+            content_type='application/json',
+            headers={'token': self.token}
+        )
+
+        resp = json.loads(post.data)
+        self.assertEqual(resp['status'], 'failure')
+        self.assertEqual(resp['error']['message'], 'only admin change destination of an order')
+        self.assertEqual(post.status_code, 401)
+
 
     def test_string_error(self):
         """
         Method for checking string errors
         """
         post = self.client().post(
-            '/api/v1/parcels',
+            '/api/v2/parcels',
             data=json.dumps(dict(
                 pickup='mulago',
                 destination='ntinda',
@@ -93,7 +214,7 @@ class TestView(TestCase):
         Method for checking int errors
         """
         post = self.client().post(
-            '/api/v1/parcels',
+            '/api/v2/parcels',
             data=json.dumps(dict(
                 pickup='mulago',
                 destination='ntinda',
@@ -115,7 +236,7 @@ class TestView(TestCase):
         Method for checking empty errors
         """
         post = self.client().post(
-            '/api/v1/parcels',
+            '/api/v2/parcels',
             data=json.dumps(dict(
                 pickup='mulago',
                 destination='',
@@ -132,11 +253,12 @@ class TestView(TestCase):
         self.assertEqual(resp['error']['message'], 'no empty field allowed')
         self.assertEqual(post.status_code, 400)
 
-    """
     def test_key_error(self):
+        """
         Method for checking key errors
+        """
         post = self.client().post(
-            '/api/v1/parcels',
+            '/api/v2/parcels',
             data=json.dumps(dict(
                 pickup='mulago',
                 destination='',
@@ -151,14 +273,13 @@ class TestView(TestCase):
         self.assertEqual(resp['status'], 'failure')
         self.assertEqual(resp['error']['message'], 'some field is missing')
         self.assertEqual(post.status_code, 400)
-    """
 
     def test_content_error(self):
         """
         Method for checking content errors
         """
         post = self.client().post(
-            '/api/v1/parcels',
+            '/api/v2/parcels',
             data=json.dumps(dict(
                 pickup='mulago',
                 destination='',
@@ -172,60 +293,4 @@ class TestView(TestCase):
         resp = json.loads(post.data)
         self.assertEqual(resp['status'], 'failure')
         self.assertEqual(resp['error']['message'], 'only json data is allowed')
-        self.assertEqual(post.status_code, 400)
-
-    """
-    def test_get_orders(self):
-        Method for checking get orders
-        post = self.client().get(
-            '/api/v1/parcels',
-            content_type='application/json',
-            headers={'token': self.token}
-        )
-
-        resp = json.loads(post.data)
-        self.assertEqual(resp['status'], 'success')
-        self.assertEqual(post.status_code, 200)
-    """
-
-    def test_single_order(self):
-        """
-        Method for checking single errors
-        """
-        post = self.client().get(
-            '/api/v1/parcels/1',
-            content_type='application/json',
-            headers={'token': self.token}
-        )
-
-        resp = json.loads(post.data)
-        self.assertEqual(resp['status'], 'failure')
-        self.assertEqual(post.status_code, 404)
-
-    def test_user_order(self):
-        """
-        Method for checking user order
-        """
-        post = self.client().get(
-            '/api/v1/users/1/parcels',
-            content_type='application/json',
-            headers={'token': self.token}
-        )
-
-        resp = json.loads(post.data)
-        self.assertEqual(resp['status'], 'failure')
-        self.assertEqual(post.status_code, 404)
-
-    def test_cancel_order(self):
-        """
-        Method for checking cancel order
-        """
-        post = self.client().put(
-            '/api/v1/parcels/1/cancel',
-            content_type='application/json',
-            headers={'token': self.token}
-        )
-
-        resp = json.loads(post.data)
-        self.assertEqual(resp['status'], 'failure')
-        self.assertEqual(post.status_code, 404)
+        self.assertEqual(post.status_code, 406)
