@@ -5,7 +5,7 @@ from unittest import TestCase
 from flask import json
 from run import APP
 from api.config.database import Database
-from api.tests.create_order import CreateOrder
+from api.tests.test_helper.create_order import CreateOrder
 
 
 class TestView(TestCase):
@@ -44,6 +44,7 @@ class TestView(TestCase):
 
         login_res = json.loads(login.data)
         self.token = login_res['token']
+
 
     def test_create_order(self):
         """
@@ -92,9 +93,9 @@ class TestView(TestCase):
         self.assertEqual(resp['data']['product'], 'Black Berry')
         self.assertEqual(post.status_code, 200)
 
-    def test_user_order(self):
+    def test_user_order_fails(self):
         """
-        Method for checking user order
+        Method for checking failure of user order
         """
         CreateOrder().create_order('arua', 'jinja', 'this is a smartphone', 4, 'Samsung', self.token)
         post = self.client().get(
@@ -149,9 +150,9 @@ class TestView(TestCase):
         self.assertEqual(post.status_code, 200)
 
 
-    def test_change_status(self):
+    def test_change_status_fails(self):
         """
-        Method for checking change destination
+        Method for checking failure of change destination
         """
         CreateOrder().create_order('yumbe', 'karamoja', 'this is a smartphone', 4, 'LG', self.token)
 
@@ -168,9 +169,9 @@ class TestView(TestCase):
         self.assertEqual(post.status_code, 401)
 
 
-    def test_change_present_location(self):
+    def test_change_present_location_fails(self):
         """
-        Method for checking change destination
+        Method for checking failure of change destination
         """
         CreateOrder().create_order('yumbe', 'karamoja', 'this is a smartphone', 4, 'LG', self.token)
 
@@ -197,7 +198,7 @@ class TestView(TestCase):
                 pickup='mulago',
                 destination='ntinda',
                 description='This is a smart phone',
-                weight='',
+                weight='dfgd',
                 product='iPhone',
             )),
             content_type='application/json',
@@ -206,7 +207,7 @@ class TestView(TestCase):
 
         resp = json.loads(post.data)
         self.assertEqual(resp['status'], 'failure')
-        self.assertEqual(resp['error']['message'], "you have a <class 'int'> error check your inputs")
+        self.assertEqual(resp['error']['message'], "dfgd should be a integer and greater than 0")
         self.assertEqual(post.status_code, 400)
 
     def test_int_error(self):
@@ -228,7 +229,7 @@ class TestView(TestCase):
 
         resp = json.loads(post.data)
         self.assertEqual(resp['status'], 'failure')
-        self.assertEqual(resp['error']['message'], "you have a <class 'str'> error check your inputs")
+        self.assertEqual(resp['error']['message'], "786 should be a string")
         self.assertEqual(post.status_code, 400)
 
     def test_empty_error(self):
