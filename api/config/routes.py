@@ -6,6 +6,7 @@ from functools import wraps
 from flask import request, jsonify
 from api.config.config import Security
 from api.controllers.controller import Controller
+from flasgger import swag_from
 
 
 class Routes:
@@ -34,28 +35,30 @@ class Routes:
                 return func(*args, **kwargs)
             return decorated
 
-        #default view
+        # default view
         @app.route('/')
         def index():
             return "<h1>Welcome to send-it</h1> <p>the only place that you can feel safe with delivery orders</p>"
 
-        #login view
+        # login view
+        @swag_from('../docs/login.yml')
         @app.route('/api/v2/auth/login', methods=['POST'], strict_slashes=False)
         def login():
                 return self.controller.login()
 
-        #signup view
+        # signup view
         @app.route('/api/v2/auth/signup', methods=['POST'], strict_slashes=False)
+        # @swag_from('../docs/signup.yml')
         def signup():
             return self.controller.signup()
 
-        #get users view
+        # get users view
         @app.route('/api/v2/users', methods=['GET'], strict_slashes=False)
         @required
         def get_users():
             return self.controller.get_users()
         
-        #create order or get orders view
+        # create order or get orders view
         @app.route('/api/v2/parcels', methods=['POST', 'GET'], strict_slashes=False)
         @required
         def parcels():
@@ -63,37 +66,37 @@ class Routes:
                 return self.controller.create_order()
             return self.controller.get_order()
 
-        #get single order view
+        # get single order view
         @app.route('/api/v2/parcels/<int:parcel_id>', methods=['GET'], strict_slashes=False)
         @required
         def get_single_parcel(parcel_id):
             return self.controller.get_order(parcel_id)
 
-        #get order by user view
+        # get order by user view
         @app.route('/api/v2/users/<int:user_id>/parcels', methods=['GET'], strict_slashes=False)
         @required
         def get_parcel_user(user_id):
             return self.controller.get_order_user(user_id)
 
-        #cancel a specific order view
+        # cancel a specific order view
         @app.route('/api/v2/parcels/<int:parcel_id>/cancel', methods=['PUT'], strict_slashes=False)
         @required
         def cancel_parcel(parcel_id):
             return self.controller.change_product(parcel_id, 'user', 'order_status', 'cancel')
 
-        #change destination view
+        # change destination view
         @app.route('/api/v2/parcels/<int:parcel_id>/destination', methods=['PUT'], strict_slashes=False)
         @required
         def change_parcel_destination(parcel_id):
             return self.controller.change_product(parcel_id, 'user', 'destination', 'destination')
 
-        #change order status view
+        # change order status view
         @app.route('/api/v2/parcels/<int:parcel_id>/status', methods=['PUT'], strict_slashes=False)
         @required
         def change_status(parcel_id):
             return self.controller.change_product(parcel_id, 'admin', 'order_status', 'status')
 
-        #change present location view
+        # change present location view
         @app.route('/api/v2/parcels/<int:parcel_id>/presentLocation', methods=['PUT'], strict_slashes=False)
         @required
         def change_location(parcel_id):
