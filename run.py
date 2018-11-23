@@ -5,6 +5,7 @@ from flask import Flask
 from api.config import config
 from api.config.routes import Routes
 from api.config.database import Database
+from flasgger import Swagger
 
 
 class Loader:
@@ -21,6 +22,10 @@ class Loader:
         """
         # app initialization
         app = Flask(__name__)
+
+        #swagger deployment
+        Swagger(app)
+        
         app.config.from_object(config.APP_CONFIG[env_name])
 
         # Directing to Routes
