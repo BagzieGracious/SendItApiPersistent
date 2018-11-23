@@ -30,9 +30,18 @@ class DataValidation:
         """
         Method that checks if each value in a list of a certain type
         """
-        for error in lst:
-            if not isinstance(error, type):
-                return jsonify(self.err("you have a {} error check your inputs".format(type))), 400
+        if type == str:
+            for error in lst:
+                if not isinstance(error, str):
+                    return jsonify(self.err("{} should be a string".format(error))), 400
+                rgx = re.compile(r"[0-9]")
+                if rgx.search(error):
+                    return jsonify(self.err("{} should be a string".format(error))), 400
+
+        if type == int:
+            for error in lst:
+                if not isinstance(error, int) or error < 0:
+                    return jsonify(self.err("{} should be a integer and greater than 0".format(error))), 400
         return True
 
     def empty_check(self, lst):
@@ -65,7 +74,7 @@ class DataValidation:
         Method that checks if the contact is correct
         """
         rgx = re.compile("^[0-9]{10,13}$")
-        if rgx.search(contact):
+        if rgx.match(contact):
             return True
         return jsonify(self.err("Invalid contact format")), 406
 
@@ -77,8 +86,8 @@ class DataValidation:
             if set(lst).issubset(self.data):
                 if type == 'signup':
                     err = [
-                        self.type_check([self.data['username'], self.data['firstname'], self.data['contact'], self.data['email'], self.data['password']], str), 
-                        self.empty_check([self.data['username'], self.data['firstname'], self.data['contact'], self.data['email'], self.data['password']]), 
+                        self.empty_check([self.data['username'], self.data['firstname'], self.data['contact'], self.data['email'],self.data['password']]),
+                        self.type_check([self.data['username'], self.data['firstname']], str),
                         self.email_check(self.data['email']), 
                         self.password_check(self.data['password']),
                         self.contact_check(self.data['contact'])
@@ -86,9 +95,9 @@ class DataValidation:
 
                 if type == 'order':
                     err = [
+                        self.empty_check([self.data['product'], self.data['description'], self.data['pickup'], self.data['destination'], self.data['weight']]),
                         self.type_check([self.data['product'], self.data['description'], self.data['pickup'], self.data['destination']], str),
-                        self.type_check([self.data['weight']], int),
-                        self.empty_check([self.data['product'], self.data['description'], self.data['pickup'], self.data['destination'], self.data['weight']])
+                        self.type_check([self.data['weight']], int)
                     ]
 
                 for value in err:
