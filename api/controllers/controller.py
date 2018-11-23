@@ -51,7 +51,7 @@ class Controller:
         if isinstance(value, bool):
             data = self.req.get_json()
             if not self.user.check_user_details(data['username'], data['email']):
-                self.user.add_user(dict(username=data['username'], firstname=data['firstname'], lastname=data['lastname'], contact=data['contact'], email=data['email'], password=data['password'], usertype='user'))
+                self.user.add_user(dict(username=(data['username']).strip(), firstname=(data['firstname']).strip(), lastname=(data['lastname']).strip(), contact=(data['contact']).strip(), email=(data['email']).strip(), password=(data['password']).strip(), usertype='user'))
                 return jsonify({"status": "success", "message": "you have signed up successfully"}), 200
             return jsonify({"status": "failure", "error": {"message": "username or email already exists"}}), 406
         return value
@@ -74,7 +74,7 @@ class Controller:
             value = DataValidation(self.req).validator(['product', 'description', 'weight', 'pickup', 'destination'], 'order')
             if isinstance(value, bool):
                 data = self.req.get_json()
-                order = dict(order_id=None, product=data['product'], present=['pickup'], description=data['description'], weight=data['weight'], order_status='pending', pickup=data['pickup'], destination=data['destination'], user_id=(self.token_value())['user_id'], usertype=None)
+                order = dict(order_id=None, product=(data['product']).strip(), present=(data['pickup']).strip(), description=(data['description']).strip(), weight=(data['weight']), order_status='pending', pickup=(data['pickup']).strip(), destination=(data['destination']).strip(), user_id=(self.token_value())['user_id'], usertype=None)
                 resp = self.order.create_order(order)
                 if resp:
                     return jsonify({"status": "success", "data": resp}), 201
@@ -132,12 +132,15 @@ class Controller:
             if isinstance(value, bool):
                 data = self.order.get_order(order_id)
                 if data:
-                    if data['order_status'] == 'cancelled' or data['order_status'] == 'delivered':
-                        return jsonify({"status": "failure","error": {"message": "you cannot change details of a delivered or cancelled order"}}), 404
-                    user_id = [None if usertype == 'admin' else (self.token_value())['user_id']]
-                    req = ['cancelled' if type == 'cancel' else (request.json)['data']]
-                    ord = self.order.update_order_details(order_id, req[0], details, user_id[0])
-                    return jsonify({"status": "success", "data": ord}), 200
+                    usr_id = [True if (self.token_value())['usertype'] == 'admin' else True if data['user_id'] == (self.token_value())['usertype'] else False]
+                    if usr_id:
+                        if data['order_status'] == 'cancelled' or data['order_status'] == 'delivered':
+                            return jsonify({"status": "failure","error": {"message": "you cannot change details of a delivered or cancelled order"}}), 200
+                        user_id = [None if usertype == 'admin' else (self.token_value())['user_id']]
+                        req = ['cancelled' if type == 'cancel' else (request.json)['data']]
+                        ord = self.order.update_order_details(order_id, req[0], details, user_id[0])
+                        return jsonify({"status": "success", "data": ord}), 200
+                    return jsonify({"status": "failure", "error": {"message": "you can't access this resource"}}), 401
                 return jsonify({"status": "failure", "error": {"message": "no order found"}}), 404
             return value
         return jsonify({"status": "failure", "error": {"message": "only "+ usertype +" change destination of an order"}}), 401
